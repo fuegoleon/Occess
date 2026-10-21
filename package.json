@@ -1,6 +1,6 @@
 {
   "name": "occess",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Occess - Sistema de Gestion y Filtrado",
   "main": "main.js",
   "scripts": {
