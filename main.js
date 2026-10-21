@@ -77,12 +77,13 @@ function setupAutoUpdater(win) {
 }
 
 function createWindow() {
+  const currentVer = app.getVersion();
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    title: 'Occess - Sistema de Gestión y Filtrado',
+    title: `Occess v${currentVer} - Sistema de Gestión y Filtrado`,
     icon: path.join(__dirname, 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
@@ -98,6 +99,7 @@ function createWindow() {
   win.loadFile('index.html');
 
   win.once('ready-to-show', () => {
+    win.setTitle(`Occess v${currentVer} - Sistema de Gestión y Filtrado`);
     win.maximize();
     win.show();
   });
@@ -138,7 +140,7 @@ function createWindow() {
               dialog.showMessageBox(win, {
                 type: 'warning',
                 title: 'Aviso',
-                message: 'No se pudo conectar con GitHub Releases.',
+                message: 'No se pudo conectar con el servidor de actualizaciones.',
                 detail: err.message
               });
               isManualCheck = false;
@@ -146,12 +148,6 @@ function createWindow() {
           }
         },
         { type: 'separator' },
-        {
-          label: 'Ver repositorio en GitHub',
-          click: () => {
-            shell.openExternal('https://github.com/fuegoleon/Occess');
-          }
-        },
         {
           label: 'Acerca de Occess',
           click: () => {

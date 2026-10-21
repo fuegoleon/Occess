@@ -41,7 +41,11 @@ if (-not (Test-Path "$targetWinCodeSign\windows-10")) {
 $env:CSC_IDENTITY_AUTO_DISCOVERY = "false"
 $env:ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES = "true"
 
-Write-Host "[2/2] Compilando e subiendo a GitHub Releases (version $( (Get-Content package.json | ConvertFrom-Json).version ))..." -ForegroundColor Yellow
+# Limpieza de instaladores anteriores para ahorrar espacio en disco
+Write-Host "[*] Limpiando instaladores anteriores en dist para ahorrar espacio..." -ForegroundColor Gray
+Remove-Item "dist\Occess-Setup-*.exe", "dist\*.blockmap" -Force -ErrorAction SilentlyContinue
+
+Write-Host "[2/2] Compilando y subiendo a GitHub Releases (version $( (Get-Content package.json | ConvertFrom-Json).version ))..." -ForegroundColor Yellow
 Write-Host ""
 
 & "$nodeDir\npm.cmd" run release
