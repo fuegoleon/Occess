@@ -47,6 +47,26 @@ Write-Host ""
 & "$nodeDir\npm.cmd" run release
 
 if ($LASTEXITCODE -eq 0) {
+    # Publicar automáticamente sacando de borrador (draft: false)
+    $currVersion = "v" + ((Get-Content package.json | ConvertFrom-Json).version)
+    Write-Host "[3/3] Publicando version $currVersion como lanzamiento oficial visible..." -ForegroundColor Cyan
+    try {
+        $headers = @{
+            Authorization = "Bearer $env:GH_TOKEN"
+            "User-Agent" = "Occess-App"
+            "Accept" = "application/vnd.github+json"
+        }
+        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/fuegoleon/Occess/releases" -Headers $headers
+        foreach ($r in $releases) {
+            if ($r.tag_name -eq $currVersion -and $r.draft) {
+                $body = @{ draft = $false; make_latest = "true" } | ConvertTo-Json
+                Invoke-RestMethod -Uri "https://api.github.com/repos/fuegoleon/Occess/releases/$($r.id)" -Method Patch -Headers $headers -Body $body -ContentType "application/json" | Out-Null
+            }
+        }
+    } catch {
+        Write-Host "[AVISO] No se pudo cambiar el estado de draft automaticamente: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+
     Write-Host ""
     Write-Host "========================================================================" -ForegroundColor Green
     Write-Host " [EXITO] ¡Version publicada exitosamente en GitHub Releases!" -ForegroundColor Green
