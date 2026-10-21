@@ -5,7 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:portable": "electron-builder --win portable"
+    "build:portable": "electron-builder --win portable",
+    "build:installer": "electron-builder --win nsis",
+    "build:all": "electron-builder --win nsis portable",
+    "release": "electron-builder --win nsis portable --publish always"
   },
   "devDependencies": {
     "electron": "^33.2.0",
@@ -14,9 +17,35 @@
   "build": {
     "appId": "com.occess.desktop",
     "productName": "Occess",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "fuegoleon",
+        "repo": "Occess"
+      }
+    ],
     "win": {
-      "target": "portable",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
       "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Occess",
+      "artifactName": "Occess-Setup-${version}.exe"
     },
     "portable": {
       "artifactName": "Occess.exe"
@@ -37,5 +66,8 @@
     "directories": {
       "output": "dist"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
