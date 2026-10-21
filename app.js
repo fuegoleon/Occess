@@ -2437,8 +2437,88 @@ function showTicketDetail(ticketNumber) {
 }
 
 // ==========================================
-// EXPORTAR A EXCEL (CSV UTF-8) Y COPIAR
 // ==========================================
+// EXPORTAR A EXCEL (XLSX MULTI-HOJAS / CSV)
+// ==========================================
+function normalizeDepto(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getRowTiempoAtencion(row) {
+  let t = row['Tiempo Atención'] ?? row.tiempo_atencion;
+  if (t === undefined || t === null || t === '') {
+    const serv = String(row['Servicio'] || row.servicio || '').trim();
+    const ref = getTablasReferencia();
+    if (ref.tiemposAtencion && ref.tiemposAtencion.hasOwnProperty(serv)) {
+      t = ref.tiemposAtencion[serv];
+    } else {
+      t = 15;
+    }
+  }
+  const match = String(t ?? '').match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
+// Clasificación fiel en las 5 hojas solicitadas
+function categorizeRowSQL(row) {
+  const dNorm = normalizeDepto(row['Departamento Origen'] || row.depto_origen);
+
+  // 1. ONCOSALUD: Back Office - Correos y Plataforma - Módulo
+  if (dNorm === 'back office - correos' || dNorm === 'plataforma - modulo' || dNorm.startsWith('plataforma - modulo')) {
+    return 'ONCOSALUD';
+  }
+
+  // 2. AUNA SALUD: Back Office - Correo Auna Salud
+  if (dNorm === 'back office - correo auna salud') {
+    return 'AUNA SALUD';
+  }
+
+  // Departamentos Call Center
+  const callDeptos = [
+    'back office - callcenter',
+    'back office - call center',
+    'call center - auna salud',
+    'call center - diamante',
+    'call center - oro',
+    'call center - plata',
+    'call center - renovacion blindaje',
+    'call center - retenciones'
+  ];
+
+  if (callDeptos.includes(dNorm)) {
+    const tiempo = getRowTiempoAtencion(row);
+    if (tiempo === 15) return 'CALL SOPORTE';
+    if (tiempo === 5) return 'CALL DESPACHO';
+    if (tiempo === 10) return 'CALL MODIFICACIONES';
+  }
+
+  return 'OTROS';
+}
+
+function formatRowForExport(row, cols) {
+  return cols.map(col => {
+    let val = row[col.key];
+    if ((val === undefined || val === null || val === '') && (col.key === 'Tiempo Atención' || col.key === 'tiempo_atencion' || col.key.includes('Tiempo Atenci'))) {
+      val = row.tiempo_atencion ?? row['Tiempo Atención'] ?? '';
+    }
+    if (state.onlySQLFilter && (col.label === 'Nombres Afiliado' || col.key === 'Nombres Afiliado')) {
+      val = resolveNombreAfiliado(row);
+    }
+    if (state.onlySQLFilter && (col.label === 'Correo Afiliado' || col.key === 'Correo Afiliado')) {
+      val = resolveCorreoAfiliado(row);
+    }
+    if ((col.label === 'Teléfono de Contacto' || col.key === 'Teléfono de Contacto') && row.telefono) {
+      val = row.telefono;
+    }
+    return val ?? '';
+  });
+}
+
 function exportToExcelCSV() {
   const visibleCols = getVisibleColumnsList();
   const rows = state.filteredData;
@@ -2448,52 +2528,108 @@ function exportToExcelCSV() {
     return;
   }
 
+  const isSQL = state.onlySQLFilter;
+
   runWithLoading({
-    title: 'Exportando Datos a Excel',
+    title: isSQL ? 'Generando Excel en 5 Hojas' : 'Exportando Datos a Excel',
     iconType: 'export',
     badgeText: `${rows.length.toLocaleString()} filas`,
     badgeIcon: '📥',
-    initialStatus: 'Generando archivo CSV estructurado con UTF-8...',
-    initialSubstatus: 'Preparando encabezados y codificación de caracteres...',
-    successStatus: '¡Archivo Generado Exitosamente!',
-    successSubstatus: 'Descarga iniciada en su navegador',
+    initialStatus: isSQL ? 'Distribuyendo registros en las 5 hojas...' : 'Generando archivo Excel (.xlsx)...',
+    initialSubstatus: isSQL ? 'ONCOSALUD, AUNA SALUD, CALL SOPORTE, CALL DESPACHO, CALL MODIFICACIONES' : 'Preparando celdas y codificación...',
+    successStatus: '¡Archivo Excel Generado Exitosamente!',
+    successSubstatus: 'Descarga iniciada en su equipo',
     holdSuccessMs: 450
   }, () => {
-    // Encabezados con delimitador punto y coma
-    let csvContent = '\uFEFF';
-    csvContent += visibleCols.map(c => `"${c.label.replace(/"/g, '""')}"`).join(';') + '\r\n';
+    if (typeof XLSX !== 'undefined') {
+      const wb = XLSX.utils.book_new();
+      const headers = visibleCols.map(c => c.label);
 
-    rows.forEach(row => {
-      const line = visibleCols.map(col => {
-        let val = row[col.key];
-        if ((val === undefined || val === '') && (col.key === 'Tiempo Atención' || col.key.includes('Tiempo Atenci'))) {
-          val = row.tiempo_atencion;
-        }
-        if (state.onlySQLFilter && (col.label === 'Nombres Afiliado' || col.key === 'Nombres Afiliado')) {
-          val = resolveNombreAfiliado(row);
-        }
-        if (state.onlySQLFilter && (col.label === 'Correo Afiliado' || col.key === 'Correo Afiliado')) {
-          val = resolveCorreoAfiliado(row);
-        }
-        if ((col.label === 'Teléfono de Contacto' || col.key === 'Teléfono de Contacto') && row.telefono) {
-          val = row.telefono;
-        }
-        val = String(val ?? '');
-        return `"${val.replace(/"/g, '""')}"`;
-      }).join(';');
-      csvContent += line + '\r\n';
-    });
+      if (isSQL) {
+        // Diccionario de las 5 hojas ordenadas
+        const sheetsData = {
+          'ONCOSALUD': [],
+          'AUNA SALUD': [],
+          'CALL SOPORTE': [],
+          'CALL DESPACHO': [],
+          'CALL MODIFICACIONES': [],
+          'OTROS': []
+        };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Datos_Exportados_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }).then(() => {
-    showToast(`✅ ${rows.length.toLocaleString()} registros exportados correctamente`, 'success');
+        rows.forEach(row => {
+          const cat = categorizeRowSQL(row);
+          if (sheetsData[cat]) {
+            sheetsData[cat].push(row);
+          } else {
+            sheetsData['OTROS'].push(row);
+          }
+        });
+
+        const sheetNames = ['ONCOSALUD', 'AUNA SALUD', 'CALL SOPORTE', 'CALL DESPACHO', 'CALL MODIFICACIONES'];
+        if (sheetsData['OTROS'].length > 0) {
+          sheetNames.push('OTROS');
+        }
+
+        sheetNames.forEach(sheetName => {
+          const sheetRows = sheetsData[sheetName] || [];
+          const aoa = [headers, ...sheetRows.map(r => formatRowForExport(r, visibleCols))];
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        });
+
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        const fileName = `Occess_SAR_Filtrado_5Hojas_${fechaHoy}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        return {
+          isSQL: true,
+          counts: {
+            onco: sheetsData['ONCOSALUD'].length,
+            auna: sheetsData['AUNA SALUD'].length,
+            soporte: sheetsData['CALL SOPORTE'].length,
+            despacho: sheetsData['CALL DESPACHO'].length,
+            modificaciones: sheetsData['CALL MODIFICACIONES'].length,
+            otros: sheetsData['OTROS'].length
+          }
+        };
+      } else {
+        // Exportación normal en 1 sola hoja
+        const aoa = [headers, ...rows.map(r => formatRowForExport(r, visibleCols))];
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+        const fileName = `Occess_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        return { isSQL: false };
+      }
+    } else {
+      // Fallback CSV si XLSX no estuviera cargado
+      let csvContent = '\uFEFF';
+      csvContent += visibleCols.map(c => `"${c.label.replace(/"/g, '""')}"`).join(';') + '\r\n';
+
+      rows.forEach(row => {
+        const line = formatRowForExport(row, visibleCols).map(val => `"${String(val).replace(/"/g, '""')}"`).join(';');
+        csvContent += line + '\r\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Datos_Exportados_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return { isSQL: false };
+    }
+  }).then((res) => {
+    if (res && res.isSQL) {
+      const c = res.counts;
+      let msg = `✅ Excel 5 hojas generado: ONCOSALUD (${c.onco}), AUNA SALUD (${c.auna}), SOPORTE (${c.soporte}), DESPACHO (${c.despacho}), MODIFICACIONES (${c.modificaciones})`;
+      if (c.otros > 0) msg += `, OTROS (${c.otros})`;
+      showToast(msg, 'success');
+    } else {
+      showToast(`✅ ${rows.length.toLocaleString()} registros exportados correctamente a Excel`, 'success');
+    }
   });
 }
 
