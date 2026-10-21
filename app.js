@@ -251,7 +251,7 @@ function showEmptyState() {
   elements.kpiTotalTickets.textContent = '0';
   elements.kpiFilteredTickets.textContent = '0';
   elements.kpiAvgTiempo.textContent = '0 min';
-  elements.kpiDeptosCount.textContent = '0';
+  if (elements.kpiDeptosCount) elements.kpiDeptosCount.textContent = '0';
   elements.activeFiltersBar.style.display = 'none';
   if (elements.currentFileBadge) elements.currentFileBadge.textContent = 'Sin archivo cargado';
   if (elements.lastUpdatedBadge) elements.lastUpdatedBadge.textContent = 'Sin datos';
@@ -1842,9 +1842,11 @@ function updateKPIs() {
     elements.kpiAvgTiempo.textContent = '0 min';
   }
 
-  // Departamentos únicos
-  const deptosSet = new Set(filtered.map(r => r.depto_origen).filter(Boolean));
-  elements.kpiDeptosCount.textContent = deptosSet.size.toLocaleString();
+  // Departamentos únicos (opcional si existe el elemento en UI)
+  if (elements.kpiDeptosCount) {
+    const deptosSet = new Set(filtered.map(r => r.depto_origen).filter(Boolean));
+    elements.kpiDeptosCount.textContent = deptosSet.size.toLocaleString();
+  }
 }
 
 // Renderizar badges de filtros activos
