@@ -15,6 +15,11 @@ yarn-error.log*
 # Archivos pesados de pruebas locales (opcional mantener plantillas si se requiere)
 Pruebas2026.xlsx
 
+# Tokens y credenciales privadas
+.env
+github_token.txt
+*.token
+
 # Sistema y editores
 .DS_Store
 Thumbs.db
