@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Occess - Sistema de Gestión y Filtrado</title>
+  <link rel="icon" type="image/x-icon" href="icon.ico">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- Encabezado Principal -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <img src="OCCESS.png" alt="Occess Logo" class="brand-logo-img" style="width: 42px; height: 42px; border-radius: 8px; object-fit: contain; background: rgba(255,255,255,0.06); padding: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+        <div class="brand-title">
+          <h1>Occess</h1>
+          <div class="brand-subtitle">
+            <span>Sistema de Gestión y Filtrado</span>
+            <span class="badge-tag" id="currentFileBadge" style="background: #e0e7ff; color: #3730a3;">Sin archivo
+              cargado</span>
+            <span class="badge-tag" id="lastUpdatedBadge">Sin datos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Input oculto para cargar cualquier archivo Excel -->
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+        <button id="btnLoadExcel" class="btn btn-primary btn-sm"
+          title="Cargar cualquier otro archivo Excel (.xlsx, .xls, .csv) directamente">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+          </svg>
+          <span>📂 Cargar Excel</span>
+        </button>
+        <button id="btnClearData" class="btn btn-outline btn-sm"
+          title="Limpiar todos los datos cargados y volver al estado inicial" style="color: var(--danger);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
+          </svg>
+          🧹 Limpiar Data
+        </button>
+        <button id="btnFiltroSQL" class="btn btn-outline btn-sm"
+          title="Filtrar por la consulta SQL SAR (Call Center, Horarios SLA y Reglas de Corte)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          <span id="filtroSQLLabel">⚡ Filtro SQL (SAR)</span>
+        </button>
+        <button id="btnFiltroFechaAnterior" class="btn btn-outline btn-sm"
+          title="Filtrar siempre por fecha anterior (Lunes: Viernes, Sábado y Domingo; Martes a Viernes: día anterior) y actualizar Fecha Registro (Hoy 09:00:00), Mes actual y Hora 09:00:00">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <circle cx="12" cy="15" r="2" fill="currentColor" />
+          </svg>
+          <span id="filtroFechaAnteriorLabel">📅 Filtro Fecha Anterior (9:00 AM)</span>
+        </button>
+        <button id="btnColumnSelector" class="btn btn-outline btn-sm" title="Elegir qué columnas ver">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
+          </svg>
+          Columnas
+        </button>
+        <button id="btnExportExcel" class="btn btn-success btn-sm" title="Descargar como Excel (.csv con UTF-8)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Exportar a Excel
+        </button>
+        <button id="btnCopyClipboard" class="btn btn-outline btn-sm" title="Copiar tabla visible para pegar en Excel">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          Copiar
+        </button>
+        <button id="btnThemeToggle" class="btn btn-ghost btn-sm" title="Modo Oscuro / Claro">
+          <span id="themeIcon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tarjetas KPI / Métricas -->
+  <section class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">🎫</div>
+      <div class="kpi-data">
+        <span class="kpi-value" id="kpiTotalTickets">0</span>
+        <span class="kpi-label">Total de Tickets</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">🔍</div>
+      <div class="kpi-data">
+        <span class="kpi-value" id="kpiFilteredTickets">0</span>
+        <span class="kpi-label">Tickets Visibles</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber">⏱️</div>
+      <div class="kpi-data">
+        <span class="kpi-value" id="kpiAvgTiempo">0 min</span>
+        <span class="kpi-label">Tiempo Promedio Atención</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple">🏢</div>
+      <div class="kpi-data">
+        <span class="kpi-value" id="kpiDeptosCount">0</span>
+        <span class="kpi-label">Departamentos Origen</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contenedor Principal de la Tabla -->
+  <main class="main-wrapper">
+    <div class="table-card">
+
+      <!-- Barra de herramientas superior -->
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" id="globalSearchInput" class="search-input"
+            placeholder="Búsqueda rápida en todas las columnas...">
+        </div>
+
+        <div class="toolbar-controls">
+          <button id="btnClearAllFilters" class="btn btn-outline btn-sm" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Limpiar Filtros
+          </button>
+
+          <!-- Selector / Simulador de Día para Filtro Fecha Anterior -->
+          <div id="simuladorDiaBox" style="display: none; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); background: var(--bg-hover); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border-strong);">
+            <span style="font-weight: 600; color: #d97706;">📅 Día Evaluado:</span>
+            <select id="simuladorDiaSelect" style="padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-main); font-size: 12px; font-weight: 600;">
+              <option value="lunes">Lunes (Jala Viernes 16, Sábado 17 y Domingo 18)</option>
+              <option value="martes" selected>Martes (Hoy - Jala Lunes 19)</option>
+              <option value="miercoles">Miércoles (Jala Martes 20)</option>
+              <option value="jueves">Jueves (Jala Miércoles 21)</option>
+              <option value="viernes">Viernes (Jala Jueves 22)</option>
+              <option value="sabado">Sábado (No jala nada)</option>
+              <option value="domingo">Domingo (No jala nada)</option>
+            </select>
+          </div>
+
+          <label style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+            Mostrar:
+            <select id="pageSizeSelect"
+              style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-main); font-size: 12px;">
+              <option value="25">25 filas</option>
+              <option value="50" selected>50 filas</option>
+              <option value="100">100 filas</option>
+              <option value="250">250 filas</option>
+              <option value="500">500 filas</option>
+              <option value="99999">Todas</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros Activos (Chips/Badges) -->
+      <div id="activeFiltersBar" class="active-filters-bar" style="display: none;">
+        <span class="active-filters-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          Filtros activos:
+        </span>
+        <div id="filterBadgesContainer" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+      </div>
+
+      <!-- Tabla de Datos con cabecera y fila de filtro rápido -->
+      <div class="table-responsive">
+        <table class="data-table" id="dataTable">
+          <thead>
+            <tr id="tableHeaderRow">
+              <!-- Se generará dinámicamente con JavaScript -->
+            </tr>
+            <tr class="filter-row" id="quickFilterRow">
+              <!-- Se generará dinámicamente para búsqueda rápida por columna -->
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Filas generadas dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Barra de Paginación -->
+      <div class="pagination-bar">
+        <div class="pagination-info" id="paginationInfo">Mostrando 0 - 0 de 0</div>
+        <div class="pagination-controls" id="paginationControls">
+          <!-- Botones de paginación dinámicos -->
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal Selector de Columnas Visibles -->
+  <div class="modal-overlay" id="columnModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Configurar Columnas Visibles</h3>
+        <button class="excel-popup-close" id="btnCloseColumnModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px;">
+          <input type="text" id="colSearchInput" class="search-input"
+            placeholder="Buscar columna (ej: Observación, Teléfono, Correo...)..." style="width: 100%;">
+        </div>
+        <div class="column-toggles-grid" id="columnTogglesContainer">
+          <!-- Opciones dinámicas -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" id="btnSelectAllCols">Seleccionar Todas</button>
+        <button class="btn btn-outline btn-sm" id="btnDeselectAllCols">Deseleccionar Todas</button>
+        <button class="btn btn-outline btn-sm" id="btnResetDefaultCols">Solo 8 Principales</button>
+        <button class="btn btn-primary btn-sm" id="btnApplyCols">Aplicar Columnas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detalle del Ticket -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="detailModalTitle">Detalle del Ticket</h3>
+        <button class="excel-popup-close" id="btnCloseDetailModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" id="detailContent">
+          <!-- Contenido dinámico del ticket -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-sm" id="btnCloseDetailBtn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay para Arrastrar y Soltar archivos Excel -->
+  <div class="drop-overlay" id="dropOverlay">
+    <div class="drop-overlay-box">
+      <div class="drop-icon">📊</div>
+      <h3>Suelte el archivo Excel aquí</h3>
+      <p>Se cargarán todas las filas y columnas automáticamente sin filtros</p>
+    </div>
+  </div>
+
+  <!-- Pantalla / Modal de Carga de Excel con Barra de Progreso -->
+  <div class="excel-loading-overlay" id="excelLoadingOverlay" aria-hidden="true">
+    <div class="excel-loading-card">
+      <div class="excel-loading-icon-wrap" id="loadingIconWrap">
+        <div class="excel-icon-pulse"></div>
+        <div class="excel-loading-icon" id="loadingIconMain">
+          <svg viewBox="0 0 48 48" fill="none" class="excel-svg" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="4" width="36" height="40" rx="8" fill="#10b981" />
+            <path d="M14 18L22 30M22 18L14 30" stroke="white" stroke-width="3.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M28 18H34M28 24H34M28 30H34" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="excel-loading-content">
+        <h3 class="excel-loading-title" id="loadingTitle">Cargando archivo Excel...</h3>
+
+        <div class="excel-loading-file" id="loadingFileBadge">
+          <span class="file-icon">📊</span>
+          <span class="file-name" id="loadingFileName">documento.xlsx</span>
+          <span class="file-size-badge" id="loadingFileSize">0 KB</span>
+        </div>
+
+        <div class="excel-progress-container">
+          <div class="excel-progress-header">
+            <span class="excel-progress-status" id="loadingStatus">Iniciando lectura...</span>
+            <span class="excel-progress-percent" id="loadingPercent">0%</span>
+          </div>
+          <div class="excel-progress-track">
+            <div class="excel-progress-fill" id="loadingProgressBar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="excel-loading-substatus" id="loadingSubstatus">
+          Procesando hojas de cálculo y registros...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor de notificaciones Toast -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Librería SheetJS para lectura offline de Excel en navegador -->
+  <script src="xlsx.full.min.js"></script>
+  <!-- Base de datos sincronizada por actualizar_datos.ps1 -->
+  <script src="data.js"></script>
+  <!-- Lógica interactiva con filtros tipo Excel -->
+  <script src="app.js"></script>
+</body>
+
+</html>

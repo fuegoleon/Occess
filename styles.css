@@ -1,0 +1,1345 @@
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --accent: #0ea5e9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-header: #f1f5f9;
+  --bg-hover: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-light: #1e293b;
+  --primary-border: #1e3a8a;
+  --bg-main: #0b1120;
+  --bg-card: #151f32;
+  --bg-header: #1e293b;
+  --bg-hover: #1c2b46;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --border: #22324e;
+  --border-strong: #33486c;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header & Navbar */
+.app-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-container {
+  max-width: 1700px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981 0%, #0284c7 100%);
+  color: white;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+}
+
+.brand-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-tag {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+[data-theme="dark"] .badge-tag {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  user-select: none;
+  background: transparent;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-outline {
+  background-color: var(--bg-card);
+  border-color: var(--border-strong);
+  color: var(--text-main);
+}
+.btn-outline:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--primary);
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.btn-ghost {
+  color: var(--text-muted);
+}
+.btn-ghost:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* KPI Cards */
+.kpi-container {
+  max-width: 1700px;
+  margin: 18px auto 0;
+  padding: 0 24px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.kpi-icon.blue { background: #eff6ff; color: #2563eb; }
+.kpi-icon.green { background: #f0fdf4; color: #16a34a; }
+.kpi-icon.amber { background: #fffbeb; color: #d97706; }
+.kpi-icon.purple { background: #faf5ff; color: #9333ea; }
+.kpi-icon.rose { background: #fff1f2; color: #e11d48; }
+
+[data-theme="dark"] .kpi-icon.blue { background: #1e3a8a; color: #93c5fd; }
+[data-theme="dark"] .kpi-icon.green { background: #064e3b; color: #86efac; }
+[data-theme="dark"] .kpi-icon.amber { background: #78350f; color: #fde68a; }
+[data-theme="dark"] .kpi-icon.purple { background: #581c87; color: #d8b4fe; }
+[data-theme="dark"] .kpi-icon.rose { background: #881337; color: #fda4af; }
+
+.kpi-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Main Container */
+.main-wrapper {
+  max-width: 1700px;
+  margin: 18px auto 32px;
+  padding: 0 24px;
+  width: 100%;
+  flex: 1;
+}
+
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Toolbar */
+.toolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+}
+
+.search-box {
+  position: relative;
+  min-width: 280px;
+  flex: 1;
+  max-width: 450px;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  font-size: 13px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Active Filter Badges */
+.active-filters-bar {
+  padding: 10px 18px;
+  background: var(--primary-light);
+  border-bottom: 1px solid var(--primary-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.active-filters-title {
+  font-weight: 600;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-badge {
+  background: var(--bg-card);
+  border: 1px solid var(--primary-border);
+  color: var(--text-main);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-badge-remove {
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.filter-badge-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Grid Table */
+.table-responsive {
+  overflow-x: auto;
+  position: relative;
+  max-height: 68vh;
+  min-height: 350px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.data-table th {
+  background: var(--bg-header);
+  color: var(--text-main);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-strong);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.th-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.th-title:hover {
+  color: var(--primary);
+}
+
+.sort-icon {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.sort-icon.active {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Excel Filter Trigger Button in Header */
+.excel-filter-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.excel-filter-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--border-strong);
+  color: var(--primary);
+}
+
+.excel-filter-btn.active {
+  background: var(--primary);
+  color: white !important;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Column Drag & Drop Reordering */
+th[draggable="true"] {
+  cursor: grab;
+  position: relative;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+th[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+th.th-dragging {
+  opacity: 0.35 !important;
+  background-color: var(--bg-hover) !important;
+  border: 1px dashed var(--primary) !important;
+}
+
+/* Indicadores de inserción a la izquierda o derecha de la columna */
+th.th-drag-left {
+  position: relative;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+th.th-drag-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+  z-index: 10;
+  border-radius: 2px;
+}
+
+th.th-drag-right {
+  position: relative;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+th.th-drag-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 4px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+  z-index: 10;
+  border-radius: 2px;
+}
+
+.col-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  font-size: 13px;
+  cursor: grab;
+  padding: 0 4px;
+  opacity: 0.5;
+  user-select: none;
+  transition: opacity 0.15s, color 0.15s;
+  letter-spacing: -1px;
+}
+
+th:hover .col-drag-handle {
+  opacity: 1;
+  color: var(--primary);
+}
+
+/* Quick Filter Row */
+.filter-row th {
+  padding: 6px 8px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.col-quick-search {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  color: var(--text-main);
+  outline: none;
+}
+
+.col-quick-search:focus {
+  border-color: var(--primary);
+  background: var(--bg-card);
+}
+
+/* Table Body */
+.data-table tbody tr {
+  transition: background-color 0.1s ease;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.015);
+}
+
+[data-theme="dark"] .data-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.data-table td {
+  padding: 10px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.data-table td.ticket-cell {
+  font-weight: 600;
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 12.5px;
+}
+
+.tiempo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.tiempo-badge.rapido {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.tiempo-badge.medio {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.tiempo-badge.largo {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.tag-pill {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tag-si {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.tag-no {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Excel Column Filter Modal/Dropdown Popup */
+.excel-popup {
+  position: absolute;
+  width: 290px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.excel-popup-header {
+  padding: 10px 14px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.excel-popup-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.excel-popup-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.excel-popup-actions {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.excel-popup-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+}
+
+.excel-popup-btn:hover {
+  background: var(--bg-hover);
+  color: var(--primary);
+}
+
+.excel-popup-search {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.excel-popup-search input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  color: var(--text-main);
+  outline: none;
+}
+
+.excel-popup-search input:focus {
+  border-color: var(--primary);
+  background: var(--bg-card);
+}
+
+.excel-popup-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.excel-checkbox-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 0;
+  user-select: none;
+}
+
+.excel-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.excel-checkbox-count {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  background: var(--bg-header);
+  padding: 1px 5px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.excel-popup-footer {
+  padding: 10px 14px;
+  background: var(--bg-header);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Pagination Bar */
+.pagination-bar {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+  font-size: 13px;
+}
+
+.pagination-info {
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.page-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Modal General */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-header);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.column-toggles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.col-checkbox-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.col-checkbox-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+}
+
+.col-checkbox-card.core-col {
+  border-color: #93c5fd;
+  background-color: #f8fafc;
+}
+
+[data-theme="dark"] .col-checkbox-card.core-col {
+  border-color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+.col-checkbox-card .core-badge {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .col-checkbox-card .core-badge {
+  background: #312e81;
+  color: #c7d2fe;
+}
+
+/* Detail view grid */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-item.full {
+  grid-column: span 2;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 13.5px;
+  color: var(--text-main);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Drag and Drop Overlay */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.drop-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drop-overlay-box {
+  background: var(--bg-card);
+  border: 2px dashed var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  text-align: center;
+  max-width: 480px;
+  box-shadow: var(--shadow-xl);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+
+.drop-overlay.active .drop-overlay-box {
+  transform: scale(1);
+}
+
+.drop-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.drop-overlay-box h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.drop-overlay-box p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+.toast.toast-success {
+  border-left-color: var(--success);
+}
+
+.toast.toast-error {
+  border-left-color: var(--danger);
+}
+
+@keyframes slideInToast {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================
+   PANTALLA DE CARGA DE EXCEL (LOADING OVERLAY)
+   ========================================== */
+.excel-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.excel-loading-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.excel-loading-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  width: 100%;
+  max-width: 480px;
+  padding: 36px 32px 30px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.excel-loading-overlay.active .excel-loading-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Icono animado y pulso */
+.excel-loading-icon-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.excel-icon-pulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 24px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(6, 182, 212, 0.15) 70%, transparent 100%);
+  animation: pulseAura 2s ease-in-out infinite;
+  z-index: 0;
+}
+
+.excel-loading-icon {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 8px 16px rgba(16, 185, 129, 0.3));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.excel-loading-overlay.active .excel-loading-icon {
+  animation: iconFloat 2.5s ease-in-out infinite alternate;
+}
+
+.excel-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes pulseAura {
+  0% { transform: scale(0.92); opacity: 0.5; }
+  50% { transform: scale(1.18); opacity: 0.9; }
+  100% { transform: scale(0.92); opacity: 0.5; }
+}
+
+@keyframes iconFloat {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-5px) rotate(-1.5deg); }
+}
+
+@keyframes bounceSuccess {
+  0% { transform: scale(0.7); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.excel-loading-icon.success-state {
+  animation: bounceSuccess 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+/* Contenido de la tarjeta */
+.excel-loading-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+  margin-bottom: 12px;
+}
+
+.excel-loading-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  color: var(--text-main);
+  max-width: 90%;
+  margin-bottom: 24px;
+}
+
+.excel-loading-file .file-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.excel-loading-file .file-size-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+[data-theme="dark"] .excel-loading-file .file-size-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+/* Contenedor de la barra de progreso */
+.excel-progress-container {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.excel-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.excel-progress-status {
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.excel-progress-percent {
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.excel-progress-track {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.excel-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.4, 1);
+  animation: progressSheen 2s linear infinite;
+  position: relative;
+}
+
+/* Efecto brillo / sheen continuo en la barra */
+@keyframes progressSheen {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Estado de éxito cuando llega al 100% */
+.excel-progress-fill.completed {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.7);
+}
+
+.excel-loading-substatus {
+  font-size: 12px;
+  color: var(--text-light);
+  min-height: 18px;
+  transition: color 0.2s ease;
+}
+
+/* Estado de Error */
+.excel-loading-card.has-error .excel-progress-fill {
+  background: var(--danger);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.5);
+}
+
+.excel-loading-card.has-error .excel-progress-percent {
+  color: var(--danger);
+}
+
+.excel-loading-card.has-error .excel-progress-status {
+  color: var(--danger);
+}
+
+/* Estilo para botón Filtro Fecha Anterior Activo */
+.btn-fecha-activa {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+  color: #ffffff !important;
+  border-color: #92400e !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.35) !important;
+  font-weight: 600 !important;
+}
+
+.badge-tag.tag-fecha-anterior {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  border: 1px solid #fde68a;
+}
+[data-theme="dark"] .badge-tag.tag-fecha-anterior {
+  background: #78350f;
+  color: #fde68a;
+  border-color: #92400e;
+}

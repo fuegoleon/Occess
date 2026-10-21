@@ -1,0 +1,41 @@
+{
+  "name": "occess",
+  "version": "1.0.0",
+  "description": "Occess - Sistema de Gestion y Filtrado",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.occess.desktop",
+    "productName": "Occess",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "portable": {
+      "artifactName": "Occess.exe"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "data.js",
+      "xlsx.full.min.js",
+      "tablas_referencia.json",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "icon.ico",
+      "OCCESS.png"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
