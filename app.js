@@ -148,6 +148,17 @@ const elements = {
   btnCloseDetailBtn: document.getElementById('btnCloseDetailBtn'),
   detailContent: document.getElementById('detailContent'),
   detailModalTitle: document.getElementById('detailModalTitle'),
+  btnDeleteDetailModal: document.getElementById('btnDeleteDetailModal'),
+  btnEditDetailModal: document.getElementById('btnEditDetailModal'),
+  btnEditDetailModalText: document.getElementById('btnEditDetailModalText'),
+  btnSaveDetailModal: document.getElementById('btnSaveDetailModal'),
+
+  // Modal Confirmar Eliminación
+  confirmDeleteModal: document.getElementById('confirmDeleteModal'),
+  btnCloseConfirmDeleteModal: document.getElementById('btnCloseConfirmDeleteModal'),
+  btnCancelDeleteModal: document.getElementById('btnCancelDeleteModal'),
+  btnConfirmDeleteModal: document.getElementById('btnConfirmDeleteModal'),
+  deleteModalSummary: document.getElementById('deleteModalSummary'),
 
   // Botón Limpiar Data
   btnClearData: document.getElementById('btnClearData')
@@ -218,6 +229,29 @@ function saveStateToIDB(fileName, rawData, columns) {
   return idbSave('currentSession', payload).catch(err => {
     console.warn('No se pudo guardar en IndexedDB:', err);
   });
+}
+
+// ==========================================
+// PERSISTENCIA Y ASIGNACIÓN DE IDENTIFICADORES DE FILA
+// ==========================================
+let rowIdCounter = 0;
+
+function assignRowIds(data) {
+  if (!Array.isArray(data)) return;
+  data.forEach(r => {
+    if (!r._rowId) {
+      r._rowId = ++rowIdCounter;
+    } else if (typeof r._rowId === 'number' && r._rowId > rowIdCounter) {
+      rowIdCounter = r._rowId;
+    }
+  });
+}
+
+function persistCurrentData() {
+  const fileName = (elements.currentFileBadge && elements.currentFileBadge.textContent)
+    ? elements.currentFileBadge.textContent
+    : 'Base SAR';
+  saveStateToIDB(fileName, state.rawData, currentColumns);
 }
 
 // ==========================================
@@ -532,6 +566,7 @@ function loadData(restoredPayload) {
   }
 
   state.rawData = [...dataSource];
+  assignRowIds(state.rawData);
   state.rawData.forEach(row => {
     ensurePhoneExtracted(row);
     row.primer_nombre = resolveNombreAfiliado(row);
@@ -1059,6 +1094,61 @@ function setupEventListeners() {
   elements.btnCloseDetailModal.addEventListener('click', () => elements.detailModal.classList.remove('open'));
   elements.btnCloseDetailBtn.addEventListener('click', () => elements.detailModal.classList.remove('open'));
 
+  // Acciones dentro del Modal de Detalle
+  if (elements.btnEditDetailModal) {
+    elements.btnEditDetailModal.addEventListener('click', () => {
+      isDetailEditMode = !isDetailEditMode;
+      renderDetailModalContent();
+    });
+  }
+  if (elements.btnSaveDetailModal) {
+    elements.btnSaveDetailModal.addEventListener('click', saveDetailModalChanges);
+  }
+  if (elements.btnDeleteDetailModal) {
+    elements.btnDeleteDetailModal.addEventListener('click', () => {
+      if (currentDetailRecord) {
+        const idToDelete = currentDetailRecord._rowId;
+        elements.detailModal.classList.remove('open');
+        confirmDeleteRow(idToDelete);
+      }
+    });
+  }
+
+  // Modal de Confirmación de Eliminación
+  if (elements.confirmDeleteModal) {
+    elements.confirmDeleteModal.addEventListener('click', (e) => {
+      if (e.target === elements.confirmDeleteModal) closeConfirmDeleteModal();
+    });
+  }
+  if (elements.btnCloseConfirmDeleteModal) {
+    elements.btnCloseConfirmDeleteModal.addEventListener('click', closeConfirmDeleteModal);
+  }
+  if (elements.btnCancelDeleteModal) {
+    elements.btnCancelDeleteModal.addEventListener('click', closeConfirmDeleteModal);
+  }
+  if (elements.btnConfirmDeleteModal) {
+    elements.btnConfirmDeleteModal.addEventListener('click', () => {
+      if (pendingDeleteRowId) {
+        const idToDelete = pendingDeleteRowId;
+        closeConfirmDeleteModal();
+        executeDeleteRow(idToDelete);
+      }
+    });
+  }
+
+  // Cerrar modales con tecla Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (elements.confirmDeleteModal && elements.confirmDeleteModal.classList.contains('open')) {
+        closeConfirmDeleteModal();
+      } else if (elements.detailModal && elements.detailModal.classList.contains('open')) {
+        elements.detailModal.classList.remove('open');
+      } else if (elements.columnModal && elements.columnModal.classList.contains('open')) {
+        elements.columnModal.classList.remove('open');
+      }
+    }
+  });
+
   // Exportar y copiar
   elements.btnExportExcel.addEventListener('click', exportToExcelCSV);
   elements.btnCopyClipboard.addEventListener('click', copyToClipboard);
@@ -1275,8 +1365,16 @@ function reorderColumns(fromKey, targetKey, dropAfter = false) {
 function renderHeaderAndQuickFilters() {
   const visibleCols = getVisibleColumnsList();
 
+  const actionsTh = `
+    <th class="actions-col-th" title="Acciones de fila (editar o eliminar)">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">
+        Acción
+      </div>
+    </th>
+  `;
+
   // Cabecera principal
-  elements.tableHeaderRow.innerHTML = visibleCols.map(col => {
+  elements.tableHeaderRow.innerHTML = actionsTh + visibleCols.map(col => {
     const isFiltered = (state.columnFilters[col.key] && state.columnFilters[col.key].size > 0) || (state.quickFilters[col.key]);
     const isSorted = state.sort.key === col.key;
     const sortArrow = isSorted ? (state.sort.direction === 'asc' ? '▲' : '▼') : '↕';
@@ -1308,8 +1406,14 @@ function renderHeaderAndQuickFilters() {
     `;
   }).join('');
 
+  const actionsFilterTh = `
+    <th class="actions-col-th" style="text-align: center;">
+      <span style="font-size: 11px; color: var(--text-muted); opacity: 0.5;">—</span>
+    </th>
+  `;
+
   // Fila de filtro rápido
-  elements.quickFilterRow.innerHTML = visibleCols.map(col => {
+  elements.quickFilterRow.innerHTML = actionsFilterTh + visibleCols.map(col => {
     const curVal = state.quickFilters[col.key] || '';
     return `
       <th>
@@ -1707,6 +1811,63 @@ function applyFiltersAndSort() {
   saveUIState();
 }
 
+// Utilidad para escapar texto HTML
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Formatear contenido HTML de cada celda
+function formatCellValueHtml(row, col) {
+  let val = row[col.key];
+  if ((val === undefined || val === '') && (col.key === 'Tiempo Atención' || col.key.includes('Tiempo Atenci'))) {
+    val = row.tiempo_atencion;
+  }
+  val = val ?? '';
+
+  // Formateo especial por columna
+  if (col.key === 'ticket' || col.key === 'Nro. Ticket' || col.key === 'Nro Ticket') {
+    const ticketVal = row.ticket || row['Nro. Ticket'] || row['Nro Ticket'] || val;
+    return `<span class="ticket-badge-link" onclick="event.stopPropagation(); showTicketDetail('${row._rowId}')" title="Clic para ver detalle completo">${escapeHtml(val)}</span>`;
+  }
+  if (col.key === 'primer_nombre' || (state.onlySQLFilter && (col.label === 'Nombres Afiliado' || col.key === 'Nombres Afiliado'))) {
+    const nomVal = state.onlySQLFilter ? resolveNombreAfiliado(row) : (row.primer_nombre || val);
+    return `<span style="font-weight: 600; color: var(--text-main);">${escapeHtml(nomVal)}</span>`;
+  }
+  if (col.key === 'tiempo_atencion' || col.key === 'Tiempo Atención' || col.key.includes('Tiempo Atenci')) {
+    const num = parseFloat(val) || 0;
+    let badgeClass = 'medio';
+    if (num <= 5) badgeClass = 'rapido';
+    else if (num > 15) badgeClass = 'largo';
+    return `<span class="tiempo-badge ${badgeClass}">${num} min</span>`;
+  }
+  if (col.key === 'cumple_sar' || col.key === 'rechazado' || col.key === 'equipo_contacto') {
+    const isSi = val === 'S' || val === 'Sí' || val === 'SI';
+    return `<span class="tag-pill ${isSi ? 'tag-si' : 'tag-no'}">${escapeHtml(val)}</span>`;
+  }
+  if (col.key === 'telefono' || col.key === 'Teléfono de Contacto' || col.key === 'Telefono de Contacto') {
+    const telVal = row[col.key] || row.telefono || val;
+    return telVal && telVal !== '-' ? `<a href="tel:${telVal}" onclick="event.stopPropagation();" style="color: inherit; text-decoration: none; font-weight: 500;">📞 ${escapeHtml(telVal)}</a>` : '-';
+  }
+  if (col.key === 'correo_afiliado' || col.key === 'Correo de Contacto' || col.key === 'Correo Afiliado' || col.label === 'Correo Afiliado') {
+    const mailVal = state.onlySQLFilter ? resolveCorreoAfiliado(row) : (row.correo_afiliado || row[col.key] || val);
+    const isEmail = String(mailVal).includes('@');
+    return isEmail ? `<a href="mailto:${mailVal}" onclick="event.stopPropagation();" style="color: var(--primary); text-decoration: none;">✉️ ${escapeHtml(mailVal)}</a>` : `<span style="color: var(--text-muted);">${escapeHtml(mailVal)}</span>`;
+  }
+
+  // Truncar textos largos (como Observación Inicial) para que la tabla sea legible
+  const strVal = String(val);
+  if (strVal.length > 70) {
+    return `<span title="${escapeHtml(strVal)}">${escapeHtml(strVal.substring(0, 67))}...</span>`;
+  }
+  return escapeHtml(strVal);
+}
+
 // Renderizar la tabla con paginación
 function renderTable() {
   const visibleCols = getVisibleColumnsList();
@@ -1715,7 +1876,7 @@ function renderTable() {
   if (total === 0) {
     elements.tableBody.innerHTML = `
       <tr>
-        <td colspan="${visibleCols.length}" style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <td colspan="${visibleCols.length + 1}" style="text-align: center; padding: 40px; color: var(--text-muted);">
           No se encontraron registros que coincidan con los filtros aplicados.
         </td>
       </tr>
@@ -1730,57 +1891,349 @@ function renderTable() {
   const pageRows = state.filteredData.slice(startIdx, endIdx);
 
   elements.tableBody.innerHTML = pageRows.map(row => {
+    const actionsTd = `
+      <td class="action-cell">
+        <div class="row-action-btns">
+          <button class="row-action-btn btn-edit-row-icon" onclick="openRowEditor(${row._rowId})" title="Editar toda la fila">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </button>
+          <button class="row-action-btn btn-delete-row-icon" onclick="confirmDeleteRow(${row._rowId})" title="Eliminar esta fila">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          </button>
+        </div>
+      </td>
+    `;
+
     const cellsHtml = visibleCols.map(col => {
-      let val = row[col.key];
-      if ((val === undefined || val === '') && (col.key === 'Tiempo Atención' || col.key.includes('Tiempo Atenci'))) {
-        val = row.tiempo_atencion;
-      }
-      val = val ?? '';
+      const isTicket = col.key === 'ticket' || col.key === 'Nro. Ticket' || col.key === 'Nro Ticket';
+      const cellContent = formatCellValueHtml(row, col);
+      const safeColKey = escapeHtml(col.key);
 
-      // Formateo especial por columna
-      if (col.key === 'ticket' || col.key === 'Nro. Ticket' || col.key === 'Nro Ticket') {
-        const ticketVal = row.ticket || row['Nro. Ticket'] || row['Nro Ticket'] || val;
-        return `<td class="ticket-cell" onclick="showTicketDetail('${ticketVal}')" style="cursor: pointer; font-weight: 600;" title="Ver detalle">${val}</td>`;
-      }
-      if (col.key === 'primer_nombre' || (state.onlySQLFilter && (col.label === 'Nombres Afiliado' || col.key === 'Nombres Afiliado'))) {
-        const nomVal = state.onlySQLFilter ? resolveNombreAfiliado(row) : (row.primer_nombre || val);
-        return `<td style="font-weight: 600; color: var(--text-main);">${nomVal}</td>`;
-      }
-      if (col.key === 'tiempo_atencion' || col.key === 'Tiempo Atención' || col.key.includes('Tiempo Atenci')) {
-        const num = parseFloat(val) || 0;
-        let badgeClass = 'medio';
-        if (num <= 5) badgeClass = 'rapido';
-        else if (num > 15) badgeClass = 'largo';
-        return `<td><span class="tiempo-badge ${badgeClass}">${num} min</span></td>`;
-      }
-      if (col.key === 'cumple_sar' || col.key === 'rechazado' || col.key === 'equipo_contacto') {
-        const isSi = val === 'S' || val === 'Sí' || val === 'SI';
-        return `<td><span class="tag-pill ${isSi ? 'tag-si' : 'tag-no'}">${val}</span></td>`;
-      }
-      if (col.key === 'telefono' || col.key === 'Teléfono de Contacto' || col.key === 'Telefono de Contacto') {
-        const telVal = row[col.key] || row.telefono || val;
-        return `<td>${telVal && telVal !== '-' ? `<a href="tel:${telVal}" style="color: inherit; text-decoration: none; font-weight: 500;">📞 ${telVal}</a>` : '-'}</td>`;
-      }
-      if (col.key === 'correo_afiliado' || col.key === 'Correo de Contacto' || col.key === 'Correo Afiliado' || col.label === 'Correo Afiliado') {
-        const mailVal = state.onlySQLFilter ? resolveCorreoAfiliado(row) : (row.correo_afiliado || row[col.key] || val);
-        const isEmail = String(mailVal).includes('@');
-        return `<td>${isEmail ? `<a href="mailto:${mailVal}" style="color: var(--primary); text-decoration: none;">✉️ ${mailVal}</a>` : `<span style="color: var(--text-muted);">${mailVal}</span>`}</td>`;
-      }
-
-      // Truncar textos largos (como Observación Inicial) para que la tabla sea legible
-      const strVal = String(val);
-      if (strVal.length > 70) {
-        return `<td title="${strVal.replace(/"/g, '&quot;')}">${strVal.substring(0, 67)}...</td>`;
-      }
-      return `<td title="${strVal.replace(/"/g, '&quot;')}">${strVal}</td>`;
+      return `
+        <td class="editable-cell ${isTicket ? 'ticket-cell' : ''}"
+            data-col="${safeColKey}"
+            data-row-id="${row._rowId}"
+            ondblclick="startCellEdit(this, ${row._rowId}, '${safeColKey.replace(/'/g, "\\'")}')"
+            title="Doble clic para editar: ${escapeHtml(col.label)}">
+          ${cellContent}
+        </td>
+      `;
     }).join('');
 
-    return `<tr>${cellsHtml}</tr>`;
+    return `<tr data-row-id="${row._rowId}">${actionsTd}${cellsHtml}</tr>`;
   }).join('');
 
   // Actualizar barra de paginación
   elements.paginationInfo.textContent = `Mostrando ${startIdx + 1} - ${endIdx} de ${total.toLocaleString()} registros`;
   renderPaginationControls(total);
+}
+
+// ==========================================
+// EDICIÓN EN LÍNEA DE CELDAS Y MANEJO DE FILAS
+// ==========================================
+let currentActiveEditor = null;
+let pendingDeleteRowId = null;
+let lastDeletedRowInfo = null;
+
+function updateRowField(row, colKey, newVal) {
+  row[colKey] = newVal;
+  const kLower = colKey.toLowerCase();
+
+  // Sincronizar alias de Ticket
+  if (kLower.includes('ticket')) {
+    row.ticket = newVal;
+    row['Nro. Ticket'] = newVal;
+    row['Nro Ticket'] = newVal;
+  }
+
+  // Sincronizar alias de Nombre Afiliado
+  if (kLower.includes('primer_nombre') || kLower.includes('afiliado')) {
+    row.primer_nombre = resolveNombreAfiliado(row);
+  }
+
+  // Sincronizar alias de Tiempo Atención
+  if (kLower.includes('tiempo')) {
+    row.tiempo_atencion = newVal;
+    row['Tiempo Atención'] = newVal;
+  }
+
+  // Sincronizar alias de Teléfono
+  if (kLower.includes('telef')) {
+    row.telefono = newVal;
+    row['Teléfono de Contacto'] = newVal;
+    row['Telefono de Contacto'] = newVal;
+  }
+
+  // Sincronizar alias de Correo
+  if (kLower.includes('correo')) {
+    row.correo_afiliado = newVal;
+    row['Correo Afiliado'] = newVal;
+    row['Correo de Contacto'] = newVal;
+  }
+
+  // Sincronizar alias de Fecha Registro
+  if (kLower.includes('fecha')) {
+    row._origFechaRegistro = newVal;
+    row['Fecha Registro'] = newVal;
+    row._origDateYMD = getRowDateYMD(row);
+  }
+
+  // Recomputar índice de búsqueda rápida
+  row._searchStr = buildSearchStr(row);
+}
+
+function startCellEdit(cellElem, rowId, colKey) {
+  if (cellElem.classList.contains('editing-cell')) return;
+
+  if (currentActiveEditor && currentActiveEditor.cellElem !== cellElem) {
+    commitCellEdit(currentActiveEditor);
+  }
+
+  const row = state.rawData.find(r => r._rowId === rowId);
+  if (!row) return;
+
+  const currentVal = row[colKey] !== undefined ? row[colKey] : '';
+  const originalHtml = cellElem.innerHTML;
+
+  cellElem.classList.add('editing-cell');
+  const prevWidth = Math.max(cellElem.offsetWidth, 120);
+
+  const isLong = String(currentVal).length > 60 || colKey.toLowerCase().includes('observaci') || colKey.toLowerCase().includes('detalle');
+
+  let inputElem;
+  if (isLong) {
+    inputElem = document.createElement('textarea');
+    inputElem.className = 'cell-editor-textarea';
+    inputElem.rows = 3;
+  } else {
+    inputElem = document.createElement('input');
+    inputElem.type = 'text';
+    inputElem.className = 'cell-editor-input';
+  }
+
+  inputElem.value = currentVal;
+  inputElem.style.minWidth = `${prevWidth - 16}px`;
+
+  cellElem.innerHTML = '';
+  cellElem.appendChild(inputElem);
+
+  inputElem.focus();
+  inputElem.select();
+
+  const editorInfo = {
+    cellElem,
+    row,
+    rowId,
+    colKey,
+    originalHtml,
+    inputElem
+  };
+  currentActiveEditor = editorInfo;
+
+  let isCommitted = false;
+
+  const doCommit = () => {
+    if (isCommitted) return;
+    isCommitted = true;
+    commitCellEdit(editorInfo);
+  };
+
+  const doCancel = () => {
+    if (isCommitted) return;
+    isCommitted = true;
+    cancelCellEdit(editorInfo);
+  };
+
+  inputElem.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (isLong && e.shiftKey) {
+        return; // Permite salto de línea en textarea con Shift+Enter
+      }
+      e.preventDefault();
+      doCommit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      doCancel();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      doCommit();
+      navigateCellEdit(cellElem, e.shiftKey ? -1 : 1);
+    }
+  });
+
+  inputElem.addEventListener('blur', () => {
+    setTimeout(() => {
+      doCommit();
+    }, 120);
+  });
+}
+
+function commitCellEdit(editorInfo) {
+  if (!editorInfo || currentActiveEditor !== editorInfo) return;
+  const { cellElem, row, colKey, inputElem } = editorInfo;
+  currentActiveEditor = null;
+
+  const newVal = inputElem.value.trim();
+  const oldVal = row[colKey] !== undefined ? String(row[colKey]).trim() : '';
+
+  cellElem.classList.remove('editing-cell');
+
+  const colDef = currentColumns.find(c => c.key === colKey) || { key: colKey, label: colKey };
+
+  if (newVal !== oldVal) {
+    updateRowField(row, colKey, newVal);
+    persistCurrentData();
+
+    cellElem.innerHTML = formatCellValueHtml(row, colDef);
+    cellElem.classList.add('cell-flash-updated');
+    setTimeout(() => cellElem.classList.remove('cell-flash-updated'), 1500);
+
+    showToast(`✓ Campo "${colDef.label}" actualizado`, 'success');
+    updateKPIs();
+  } else {
+    cellElem.innerHTML = formatCellValueHtml(row, colDef);
+  }
+}
+
+function cancelCellEdit(editorInfo) {
+  if (!editorInfo || currentActiveEditor !== editorInfo) return;
+  const { cellElem, originalHtml } = editorInfo;
+  currentActiveEditor = null;
+  cellElem.classList.remove('editing-cell');
+  cellElem.innerHTML = originalHtml;
+}
+
+function navigateCellEdit(currentCell, direction = 1) {
+  const rowTr = currentCell.closest('tr');
+  if (!rowTr) return;
+  const editableCells = Array.from(rowTr.querySelectorAll('td.editable-cell'));
+  const currentIndex = editableCells.indexOf(currentCell);
+  if (currentIndex === -1) return;
+
+  const nextIndex = currentIndex + direction;
+  if (nextIndex >= 0 && nextIndex < editableCells.length) {
+    const nextCell = editableCells[nextIndex];
+    const rowId = parseInt(nextCell.getAttribute('data-row-id'), 10);
+    const colKey = nextCell.getAttribute('data-col');
+    if (rowId && colKey) {
+      startCellEdit(nextCell, rowId, colKey);
+    }
+  }
+}
+
+function openRowEditor(rowId) {
+  showTicketDetail(rowId, true);
+}
+
+// ==========================================
+// CONFIRMACIÓN Y ELIMINACIÓN DE FILAS
+// ==========================================
+function confirmDeleteRow(rowId) {
+  const record = state.rawData.find(r => r._rowId === rowId);
+  if (!record) return;
+
+  pendingDeleteRowId = rowId;
+  const ticketLabel = record.ticket || record['Nro. Ticket'] || record['Nro Ticket'] || `ID #${rowId}`;
+  const nombreLabel = record.primer_nombre || record.afiliado || record['Nombre Completo Afiliado'] || '-';
+  const servicioLabel = record.servicio || record['Servicio'] || '-';
+
+  if (elements.deleteModalSummary) {
+    elements.deleteModalSummary.innerHTML = `
+      <div style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px;">
+        <span style="font-weight: 600; color: var(--text-muted);">Ticket:</span>
+        <span style="font-weight: 700; color: var(--primary); font-family: monospace;">${escapeHtml(ticketLabel)}</span>
+        <span style="font-weight: 600; color: var(--text-muted);">Afiliado:</span>
+        <span style="color: var(--text-main); font-weight: 500;">${escapeHtml(nombreLabel)}</span>
+        <span style="font-weight: 600; color: var(--text-muted);">Servicio:</span>
+        <span style="color: var(--text-main);">${escapeHtml(servicioLabel)}</span>
+      </div>
+    `;
+  }
+
+  if (elements.confirmDeleteModal) {
+    elements.confirmDeleteModal.classList.add('open');
+  }
+}
+
+function closeConfirmDeleteModal() {
+  pendingDeleteRowId = null;
+  if (elements.confirmDeleteModal) {
+    elements.confirmDeleteModal.classList.remove('open');
+  }
+}
+
+function executeDeleteRow(rowId) {
+  const indexInRaw = state.rawData.findIndex(r => r._rowId === rowId);
+  if (indexInRaw === -1) return;
+
+  const deletedRow = state.rawData[indexInRaw];
+  lastDeletedRowInfo = {
+    row: deletedRow,
+    rawIndex: indexInRaw
+  };
+
+  // 1. Eliminar de rawData
+  state.rawData.splice(indexInRaw, 1);
+
+  // 2. Eliminar de originalData
+  if (state.originalData) {
+    const origIdx = state.originalData.findIndex(r => r._rowId === rowId);
+    if (origIdx !== -1) state.originalData.splice(origIdx, 1);
+  }
+
+  // 3. Eliminar de filteredData
+  const indexInFiltered = state.filteredData.findIndex(r => r._rowId === rowId);
+  if (indexInFiltered !== -1) {
+    state.filteredData.splice(indexInFiltered, 1);
+  }
+
+  // 4. Ajustar paginación si se queda vacía la página
+  const total = state.filteredData.length;
+  const maxPage = Math.max(1, Math.ceil(total / state.pageSize));
+  if (state.currentPage > maxPage) {
+    state.currentPage = maxPage;
+  }
+
+  // 5. Guardar en IndexedDB
+  persistCurrentData();
+
+  // 6. Actualizar KPIs y tabla
+  updateKPIs();
+  renderTable();
+
+  // 7. Notificación con botón Deshacer
+  const ticketLabel = deletedRow.ticket || deletedRow['Nro. Ticket'] || `ID ${rowId}`;
+  showToastWithAction(
+    `🗑️ Fila eliminada (${ticketLabel})`,
+    'Deshacer',
+    () => undoDeleteRow(),
+    'warning'
+  );
+}
+
+function undoDeleteRow() {
+  if (!lastDeletedRowInfo) return;
+  const { row, rawIndex } = lastDeletedRowInfo;
+  lastDeletedRowInfo = null;
+
+  const insertIdx = Math.min(rawIndex, state.rawData.length);
+  state.rawData.splice(insertIdx, 0, row);
+
+  if (state.originalData && !state.originalData.some(r => r._rowId === row._rowId)) {
+    state.originalData.splice(insertIdx, 0, row);
+  }
+
+  persistCurrentData();
+  applyFiltersAndSort();
+  showToast('✅ Fila restaurada con éxito', 'success');
 }
 
 // Paginación
@@ -2410,30 +2863,102 @@ function applyColumnVisibility() {
 }
 
 // ==========================================
-// DETALLE DEL REGISTRO / TICKET
+// DETALLE DEL REGISTRO / TICKET Y EDICIÓN COMPLETA
 // ==========================================
-function showTicketDetail(ticketNumber) {
+let currentDetailRecord = null;
+let isDetailEditMode = false;
+
+function showTicketDetail(identifier, openInEditMode = false) {
   const record = state.rawData.find(r => 
-    (r.ticket && String(r.ticket) === String(ticketNumber)) || 
-    (r['Nro. Ticket'] && String(r['Nro. Ticket']) === String(ticketNumber)) || 
-    (r['Nro Ticket'] && String(r['Nro Ticket']) === String(ticketNumber)) ||
-    (Object.values(r)[0] && String(Object.values(r)[0]) === String(ticketNumber))
+    (r._rowId && String(r._rowId) === String(identifier)) ||
+    (r.ticket && String(r.ticket) === String(identifier)) || 
+    (r['Nro. Ticket'] && String(r['Nro. Ticket']) === String(identifier)) || 
+    (r['Nro Ticket'] && String(r['Nro Ticket']) === String(identifier)) ||
+    (Object.values(r)[0] && String(Object.values(r)[0]) === String(identifier))
   );
   if (!record) return;
 
-  const displayTitle = record.ticket || record['Nro. Ticket'] || record['Nro Ticket'] || ticketNumber;
-  elements.detailModalTitle.textContent = `Detalle: ${displayTitle}`;
-  elements.detailContent.innerHTML = currentColumns.map(col => {
-    const val = record[col.key] || '-';
-    return `
-      <div class="detail-item ${col.key === 'afiliado' || col.key === 'servicio' || String(val).length > 40 ? 'full' : ''}">
-        <span class="detail-label">${col.label}</span>
-        <span class="detail-value">${val}</span>
-      </div>
-    `;
-  }).join('');
+  currentDetailRecord = record;
+  isDetailEditMode = openInEditMode;
 
+  renderDetailModalContent();
   elements.detailModal.classList.add('open');
+}
+
+function renderDetailModalContent() {
+  if (!currentDetailRecord) return;
+  const record = currentDetailRecord;
+  const displayTitle = record.ticket || record['Nro. Ticket'] || record['Nro Ticket'] || `ID ${record._rowId}`;
+
+  elements.detailModalTitle.innerHTML = isDetailEditMode
+    ? `✏️ Editar Fila: <span style="color: var(--primary); font-family: monospace;">${escapeHtml(displayTitle)}</span>`
+    : `Detalle: <span style="color: var(--primary); font-family: monospace;">${escapeHtml(displayTitle)}</span>`;
+
+  if (elements.btnEditDetailModalText && elements.btnSaveDetailModal) {
+    if (isDetailEditMode) {
+      elements.btnEditDetailModalText.textContent = 'Ver Solo Lectura';
+      elements.btnSaveDetailModal.style.display = 'inline-flex';
+    } else {
+      elements.btnEditDetailModalText.textContent = 'Editar Registro';
+      elements.btnSaveDetailModal.style.display = 'none';
+    }
+  }
+
+  if (isDetailEditMode) {
+    elements.detailContent.innerHTML = currentColumns.map(col => {
+      const val = record[col.key] !== undefined ? record[col.key] : '';
+      const isLong = String(val).length > 55 || col.key.toLowerCase().includes('observaci') || col.key.toLowerCase().includes('detalle');
+      const isFull = isLong || col.key === 'afiliado' || col.key === 'servicio';
+
+      return `
+        <div class="detail-item ${isFull ? 'full' : ''}">
+          <label class="detail-label" style="font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">
+            ${escapeHtml(col.label)}
+          </label>
+          ${isLong ? `
+            <textarea data-col="${escapeHtml(col.key)}" class="detail-edit-input" rows="3">${escapeHtml(val)}</textarea>
+          ` : `
+            <input type="text" data-col="${escapeHtml(col.key)}" class="detail-edit-input" value="${escapeHtml(val)}">
+          `}
+        </div>
+      `;
+    }).join('');
+  } else {
+    elements.detailContent.innerHTML = currentColumns.map(col => {
+      const val = record[col.key] || '-';
+      return `
+        <div class="detail-item ${col.key === 'afiliado' || col.key === 'servicio' || String(val).length > 40 ? 'full' : ''}">
+          <span class="detail-label">${escapeHtml(col.label)}</span>
+          <span class="detail-value">${escapeHtml(val)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function saveDetailModalChanges() {
+  if (!currentDetailRecord) return;
+  const inputs = elements.detailContent.querySelectorAll('.detail-edit-input');
+  let hasChanges = false;
+
+  inputs.forEach(input => {
+    const colKey = input.dataset.col;
+    const newVal = input.value.trim();
+    if (String(currentDetailRecord[colKey] ?? '').trim() !== newVal) {
+      updateRowField(currentDetailRecord, colKey, newVal);
+      hasChanges = true;
+    }
+  });
+
+  if (hasChanges) {
+    persistCurrentData();
+    updateKPIs();
+    renderTable();
+    showToast('✅ Registro actualizado correctamente', 'success');
+  }
+
+  isDetailEditMode = false;
+  renderDetailModalContent();
 }
 
 // ==========================================
@@ -3332,6 +3857,7 @@ function processUploadedExcel(file) {
                   });
 
                   currentColumns = newColDefs;
+                  assignRowIds(normalizedData);
                   state.rawData = normalizedData;
                   state.visibleColumns = new Set(newColDefs.map(c => c.key));
                   state.columnFilters = {};
@@ -3404,6 +3930,33 @@ function showToast(message, type = 'info') {
     toast.style.transform = 'translateY(10px)';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
+}
+
+function showToastWithAction(message, actionLabel, actionCallback, type = 'info', duration = 6500) {
+  if (!elements.toastContainer) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span style="flex: 1;">${message}</span>
+    <button type="button" class="toast-action-btn">${escapeHtml(actionLabel)}</button>
+  `;
+
+  const btn = toast.querySelector('.toast-action-btn');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toast.remove();
+      if (typeof actionCallback === 'function') actionCallback();
+    });
+  }
+
+  elements.toastContainer.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }
 
 // ==========================================

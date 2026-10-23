@@ -5,7 +5,11 @@ Write-Host "       PUBLICADOR DE VERSIONES DE OCCESS EN GITHUB RELEASES" -Foregr
 Write-Host "========================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$nodeDir = "C:\Users\ext_rleon\AppData\Local\Microsoft\WinGet\Packages\OpenJS.NodeJS.LTS_Microsoft.Winget.Source_8wekyb3d8bbwe\node-v24.20.0-win-x64"
+$nodeDir = "C:\Program Files\nodejs"
+if (-not (Test-Path "$nodeDir\npm.cmd")) {
+    $npmCmd = (Get-Command npm.cmd -ErrorAction SilentlyContinue)
+    if ($npmCmd) { $nodeDir = Split-Path $npmCmd.Source }
+}
 $env:PATH = "$nodeDir;" + $env:PATH
 
 # Cargar GH_TOKEN desde github_token.txt si existe

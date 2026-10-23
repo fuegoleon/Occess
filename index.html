@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Occess v1.0.4 - Sistema de Gestión y Filtrado</title>
+  <title>Occess v1.0.5 - Sistema de Gestión y Filtrado</title>
   <link rel="icon" type="image/x-icon" href="icon.ico">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -19,7 +19,7 @@
         <div class="brand-title">
           <div style="display: flex; align-items: center; gap: 8px;">
             <h1>Occess</h1>
-            <span class="badge-tag" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 6px;">v1.0.4</span>
+            <span class="badge-tag" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 6px;">v1.0.5</span>
           </div>
           <div class="brand-subtitle">
             <span>Sistema de Gestión y Filtrado</span>
@@ -140,6 +140,12 @@
             placeholder="Búsqueda rápida en todas las columnas...">
         </div>
 
+        <div class="table-quick-hints" style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-muted); background: var(--bg-hover); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);">
+          <span title="Haz doble clic en cualquier celda para editar su contenido directamente">✏️ <strong>Doble clic:</strong> editar celda</span>
+          <span style="opacity: 0.3;">•</span>
+          <span title="Usa el botón de papelera en la columna izquierda para eliminar cualquier fila">🗑️ <strong>Acción:</strong> eliminar fila</span>
+        </div>
+
         <div class="toolbar-controls">
           <button id="btnClearAllFilters" class="btn btn-outline btn-sm" style="display: none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -244,7 +250,7 @@
 
   <!-- Modal Detalle del Ticket -->
   <div class="modal-overlay" id="detailModal">
-    <div class="modal-box" style="max-width: 650px;">
+    <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
         <h3 class="modal-title" id="detailModalTitle">Detalle del Ticket</h3>
         <button class="excel-popup-close" id="btnCloseDetailModal">&times;</button>
@@ -254,8 +260,64 @@
           <!-- Contenido dinámico del ticket -->
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline btn-sm" id="btnCloseDetailBtn">Cerrar</button>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-danger btn-sm" id="btnDeleteDetailModal" title="Eliminar este ticket de la lista">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Eliminar Fila
+          </button>
+          <button class="btn btn-primary btn-sm" id="btnEditDetailModal" title="Editar campos de este ticket">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+            <span id="btnEditDetailModalText">Editar Registro</span>
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-success btn-sm" id="btnSaveDetailModal" style="display: none;">
+            💾 Guardar Cambios
+          </button>
+          <button class="btn btn-outline btn-sm" id="btnCloseDetailBtn">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Eliminación de Fila -->
+  <div class="modal-overlay" id="confirmDeleteModal">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px; color: var(--danger);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
+          </svg>
+          Confirmar Eliminación
+        </h3>
+        <button class="excel-popup-close" id="btnCloseConfirmDeleteModal">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px;">
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-main);">
+          ¿Está seguro de que desea eliminar esta fila?
+        </p>
+        <div id="deleteModalSummary" style="background: var(--bg-hover); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px;">
+          <!-- Resumen dinámico -->
+        </div>
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: var(--text-muted);">
+          ℹ️ Esta fila se eliminará de la base en memoria y de futuras exportaciones. Podrá deshacer la acción inmediatamente desde la notificación.
+        </p>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline btn-sm" id="btnCancelDeleteModal">Cancelar</button>
+        <button class="btn btn-danger btn-sm" id="btnConfirmDeleteModal">
+          🗑️ Sí, Eliminar
+        </button>
       </div>
     </div>
   </div>

@@ -1,5 +1,9 @@
 $ErrorActionPreference = "Continue"
-$nodeDir = "C:\Users\ext_rleon\AppData\Local\Microsoft\WinGet\Packages\OpenJS.NodeJS.LTS_Microsoft.Winget.Source_8wekyb3d8bbwe\node-v24.20.0-win-x64"
+$nodeDir = "C:\Program Files\nodejs"
+if (-not (Test-Path "$nodeDir\npm.cmd")) {
+    $npmCmd = (Get-Command npm.cmd -ErrorAction SilentlyContinue)
+    if ($npmCmd) { $nodeDir = Split-Path $npmCmd.Source }
+}
 $env:PATH = "$nodeDir;" + $env:PATH
 
 Write-Host "========================================================================" -ForegroundColor Cyan
